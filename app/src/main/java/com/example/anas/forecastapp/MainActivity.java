@@ -7,17 +7,21 @@ import android.support.design.widget.AppBarLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.example.anas.forecastapp.adapter.ForecastRecyclerViewAdapter;
 import com.example.anas.forecastapp.model.forecast.Forecast;
+import com.example.anas.forecastapp.model.forecast.Forecastday_;
 import com.example.anas.forecastapp.network.ForecastService;
 import com.example.anas.forecastapp.utils.Constants;
 import com.example.anas.forecastapp.utils.SnackbarUtils;
+import com.example.anas.forecastapp.utils.StringUtils;
 import com.example.anas.forecastapp.utils.Utils;
 import com.google.gson.Gson;
+import com.squareup.picasso.Picasso;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -36,6 +40,16 @@ public class MainActivity extends AppCompatActivity {
     private AppBarLayout appBarLayout;
     private RelativeLayout loadingLayout;
     private RelativeLayout internetErrorLayout;
+
+    private TextView todayDay;
+    private TextView todayDate;
+    private TextView todayMaxWind;
+    private TextView todayAvgWind;
+    private TextView todayHumidity;
+    private TextView todayCondition;
+    private TextView todayHighTemperature;
+    private TextView todayLowTemperature;
+    private ImageView todayIcon;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,28 +76,32 @@ public class MainActivity extends AppCompatActivity {
                 if (response != null) {
                     Forecast forecast = response.body();
                     setForecastCache(forecast, activity);
-                    Log.i(TAG, response.toString());
-                    // specify an adapter (see also next example)
-                    mAdapter = new ForecastRecyclerViewAdapter(forecast);
+
+                    setMainLayout(forecast.getForecast().getSimpleforecast().getForecastday().get(0));
+                    forecast.getForecast().getSimpleforecast().getForecastday().remove(0);
+                    mAdapter = new ForecastRecyclerViewAdapter(forecast, activity);
                     mRecyclerView.setAdapter(mAdapter);
-                    setMainLayoutVisible();
+
                 }
             }
 
             @Override
             public void onFailure(Call<Forecast> call, Throwable t) {
                 if (t != null) {
-                    Forecast forecast = getForecaseCache(activity);
+                    Forecast forecast = getForecastCache(activity);
                     if (forecast != null) {
-                        mAdapter = new ForecastRecyclerViewAdapter(forecast);
+
+                        setMainLayout(forecast.getForecast().getSimpleforecast().getForecastday().get(0));
+                        forecast.getForecast().getSimpleforecast().getForecastday().remove(0);
+                        mAdapter = new ForecastRecyclerViewAdapter(forecast, activity);
                         mRecyclerView.setAdapter(mAdapter);
-                        setMainLayoutVisible();
                         SnackbarUtils.loadSnackBar(activity.getResources().getString(R.string.load_offline_data), activity);
+
                     } else {
                         setErrorLayoutVisible();
                     }
-
-                }
+                } else
+                    setErrorLayoutVisible();
             }
 
         });
@@ -98,6 +116,16 @@ public class MainActivity extends AppCompatActivity {
 
         activity = this;
         mRecyclerView = (RecyclerView) findViewById(R.id.recyclerView);
+
+        todayDay = (TextView) findViewById(R.id.todayDay);
+        todayDate = (TextView) findViewById(R.id.todayDate);
+        todayMaxWind = (TextView) findViewById(R.id.todayMaxWind);
+        todayAvgWind = (TextView) findViewById(R.id.todayAvgWind);
+        todayHumidity = (TextView) findViewById(R.id.todayHumidity);
+        todayCondition = (TextView) findViewById(R.id.todayCondition);
+        todayHighTemperature = (TextView) findViewById(R.id.todayHighTemperature);
+        todayLowTemperature = (TextView) findViewById(R.id.todayLowTemperature);
+        todayIcon = (ImageView) findViewById(R.id.todayIcon);
 
         // use this setting to improve performance if you know that changes
         // in content do not change the layout size of the RecyclerView
@@ -120,18 +148,53 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    public Forecast getForecaseCache(Activity activity) {
+    public Forecast getForecastCache(Activity activity) {
         SharedPreferences sharedPreference = Utils.getAppSharedPreference(activity);
         String jsonUser = sharedPreference.getString(Constants.DATA_CACHE, null);
         Gson gson = new Gson();
         return gson.fromJson(jsonUser, Forecast.class);
     }
 
-    private void setMainLayoutVisible() {
+    private void setMainLayout(Forecastday_ forecastday_) {
         loadingLayout.setVisibility(View.GONE);
         internetErrorLayout.setVisibility(View.GONE);
         appBarLayout.setVisibility(View.VISIBLE);
         mRecyclerView.setVisibility(View.VISIBLE);
+
+
+        // set today day
+        todayDay.setText(forecastday_.getDate().getWeekday());
+
+        // set today date
+        String strDate = String.format(getResources().getString(R.string.date), forecastday_.getDate().getDay(), forecastday_.getDate().getMonthnameShort(), forecastday_.getDate().getYear());
+        todayDate.setText(strDate);
+
+        // set today max wind
+        String strMaxWindMsg = String.format(getResources().getString(R.string.max_wind), forecastday_.getMaxwind().getKph());
+        todayMaxWind.setText(strMaxWindMsg);
+
+        // set today avg wind
+        String strAvgWindMsg = String.format(getResources().getString(R.string.avg_wind), forecastday_.getAvewind().getKph());
+        todayAvgWind.setText(strAvgWindMsg);
+
+        // set today humidity
+        String strHumidity = String.format(getResources().getString(R.string.humidity), forecastday_.getAvehumidity());
+        todayHumidity.setText(strHumidity);
+
+        // set today condition
+        todayCondition.setText(forecastday_.getConditions());
+
+        // set today high temperature
+        String strHighTemperature = String.format(getResources().getString(R.string.celsius), forecastday_.getHigh().getCelsius());
+        todayHighTemperature.setText(strHighTemperature);
+
+        // set today low temperature
+        String strLowTemperature = String.format(getResources().getString(R.string.celsius), forecastday_.getLow().getCelsius());
+        todayLowTemperature.setText(strLowTemperature);
+
+        // set today condition  icon
+        if (!StringUtils.isBlank(forecastday_.getIconUrl()))
+            Picasso.with(activity).load(forecastday_.getIconUrl()).into(todayIcon);
     }
 
     private void setLoadingLayoutVisible() {

@@ -3,5 +3,10 @@
     <string name="internet_error">No internet connection</string>
     <string name="try_again">Try again</string>
     <string name="ok">Ok</string>
+    <string name="date">%1$d %2$s %3$d</string>
     <string name="load_offline_data">Load data offline</string>
+    <string name="max_wind">Max wind : %1$d Kph</string>
+    <string name="avg_wind">Avg wind : %1$d Kph</string>
+    <string name="humidity">Humidity : %1$d </string>
+    <string name="celsius">%1$s °C</string>
 </resources>
