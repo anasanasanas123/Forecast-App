@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Forecast App</string>
+    <string name="internet_error">No internet connection</string>
+    <string name="try_again">Try again</string>
+    <string name="ok">Ok</string>
+    <string name="load_offline_data">Load data offline</string>
 </resources>

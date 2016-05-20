@@ -13,12 +13,17 @@ import retrofit2.http.GET;
  */
 public interface ForecastService {
 
+    // initializing retrofit
     Retrofit retrofit = new Retrofit.Builder()
             .baseUrl(Constants.SERVICE_URI)
             .addConverterFactory(GsonConverterFactory.create())
             .build();
 
 
+    /**
+     * Get ForeCase json from service
+     * @return Response
+     */
     @GET(Constants.FORECASE_URI)
     Call<Forecast> repoContributors();
 
